@@ -21,7 +21,8 @@ function Login() {
 
     try {
       // Connect to MongoDB backend via Express (Exp 4 & 5)
-      const response = await axios.post("http://localhost:5000/api/users/login", {
+      const apiBase = process.env.REACT_APP_API_URL || "";
+      const response = await axios.post(`${apiBase}/api/users/login`, {
         email: data.email,
         password: data.password
       });

@@ -19,7 +19,7 @@ export default function ExpenseManager() {
   const [filterType, setFilterType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const API_BASE = "http://localhost:5000/api/expenses";
+  const API_BASE = (process.env.REACT_APP_API_URL || "") + "/api/expenses";
 
   // Fetch expenses from Node.js Express & MongoDB (Exp 5)
   const fetchExpenses = async () => {

@@ -184,8 +184,42 @@ app.get('/api/metrics/history', (req, res) => {
   });
 });
 
-// GET /api/services - Microservices list
-app.get('/api/services', (req, res) => {
+// GET /api/services - Microservices list (probes internal BACKEND_URL service if bound)
+app.get('/api/services', async (req, res) => {
+  const backendUrl = process.env.BACKEND_URL;
+  if (backendUrl) {
+    try {
+      const targetUrl = new URL('/', backendUrl);
+      const start = Date.now();
+      const backendRes = await fetch(targetUrl, { signal: AbortSignal.timeout(3000) });
+      const latency = Date.now() - start;
+      const data = await backendRes.json();
+
+      const existingIndex = services.findIndex(s => s.id === 'srv-backend');
+      const backendSrv = {
+        id: 'srv-backend',
+        name: 'Expense Tracker API (Internal)',
+        category: 'Core Microservice',
+        status: data.status === 'online' ? 'operational' : 'degraded',
+        latency: latency,
+        uptime: '99.98%',
+        region: 'Vercel Internal Mesh',
+        port: 5000
+      };
+
+      if (existingIndex !== -1) {
+        services[existingIndex] = backendSrv;
+      } else {
+        services.unshift(backendSrv);
+      }
+    } catch (err) {
+      const existingIndex = services.findIndex(s => s.id === 'srv-backend');
+      if (existingIndex !== -1) {
+        services[existingIndex].status = 'offline';
+      }
+    }
+  }
+
   res.json({
     status: 'success',
     data: services
@@ -361,15 +395,20 @@ app.use((req, res) => {
 });
 
 // Start Express Server
-const server = app.listen(PORT, () => {
-  console.log(`\n======================================================`);
-  console.log(`🚀 NexusFlow Node.js Cloud Operations Dashboard Active`);
-  console.log(`📡 Server running on http://localhost:${PORT}`);
-  console.log(`⚙️  Node Version: ${process.version} | Architecture: ${os.arch()}`);
-  console.log(`======================================================\n`);
-});
+let server;
+if (process.env.NODE_ENV !== 'test') {
+  server = app.listen(PORT, () => {
+    console.log(`\n======================================================`);
+    console.log(`🚀 NexusFlow Node.js Cloud Operations Dashboard Active`);
+    console.log(`📡 Server running on http://localhost:${PORT}`);
+    console.log(`⚙️  Node Version: ${process.version} | Architecture: ${os.arch()}`);
+    console.log(`======================================================\n`);
+  });
 
-// Handle graceful shutdown
-process.on('SIGTERM', () => {
-  server.close(() => console.log('Process terminated gracefully.'));
-});
+  // Handle graceful shutdown
+  process.on('SIGTERM', () => {
+    server?.close(() => console.log('Process terminated gracefully.'));
+  });
+}
+
+module.exports = app;

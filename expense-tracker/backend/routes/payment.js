@@ -175,6 +175,13 @@ router.post("/", async (req, res) => {
 
     console.log(`[Razorpay] Successfully processed ₹${paidAmount} via ${method.toUpperCase()} [${paymentId}] for ${name || "Customer"}`);
 
+    if (req.app?.locals?.notifyDashboard) {
+      req.app.locals.notifyDashboard(
+        `Payment Captured: ₹${paidAmount} via ${method.toUpperCase()} [Plan: ${plan}]`,
+        { priority: "High" }
+      );
+    }
+
     return res.json({
       success: true,
       status: "Payment Successful",

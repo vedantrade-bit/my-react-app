@@ -89,14 +89,22 @@ router.post("/", async (req, res) => {
       date: date ? new Date(date) : new Date()
     };
 
+    let result;
     if (isMongoConnected()) {
-      const saved = await new Expense(newDoc).save();
-      return res.status(201).json(saved);
+      result = await new Expense(newDoc).save();
     } else {
-      const simulated = { ...newDoc, _id: "exp-" + Date.now() };
-      fallbackExpenses.unshift(simulated);
-      return res.status(201).json(simulated);
+      result = { ...newDoc, _id: "exp-" + Date.now() };
+      fallbackExpenses.unshift(result);
     }
+
+    if (req.app?.locals?.notifyDashboard) {
+      req.app.locals.notifyDashboard(
+        `Transaction Logged: "${result.title}" (₹${result.amount}) [${result.type}]`,
+        { priority: result.type === "expense" ? "Medium" : "Low" }
+      );
+    }
+
+    return res.status(201).json(result);
   } catch (err) {
     console.error("POST /api/expenses error:", err);
     res.status(500).json({ message: "Error saving transaction" });

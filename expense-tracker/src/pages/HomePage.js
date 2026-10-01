@@ -31,7 +31,8 @@ export default function HomePage() {
     }
 
     // Fetch dynamic summary from Node.js & MongoDB backend
-    axios.get("http://localhost:5000/api/expenses/summary")
+    const apiBase = process.env.REACT_APP_API_URL || "";
+    axios.get(`${apiBase}/api/expenses/summary`)
       .then((res) => {
         if (res.data) {
           setSummary(res.data);

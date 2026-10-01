@@ -39,7 +39,8 @@ function Signup() {
     setServerMsg({ text: "", type: "" });
 
     try {
-      const response = await axios.post("http://localhost:5000/api/users/register", {
+      const apiBase = process.env.REACT_APP_API_URL || "";
+      const response = await axios.post(`${apiBase}/api/users/register`, {
         name: data.name,
         email: data.email,
         password: data.password

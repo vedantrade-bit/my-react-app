@@ -51,8 +51,10 @@ export default function PaymentGateway() {
     setErrorMsg("");
 
     try {
+      const apiBase = process.env.REACT_APP_API_URL || "";
+
       // Step 1: Request backend order creation
-      const orderRes = await axios.post("http://localhost:5000/api/pay/create-order", {
+      const orderRes = await axios.post(`${apiBase}/api/pay/create-order`, {
         amount: formData.amount,
         plan: formData.plan
       });
@@ -60,7 +62,7 @@ export default function PaymentGateway() {
       const orderData = orderRes.data;
 
       // Step 2: Submit payment processing to backend Razorpay endpoint
-      const response = await axios.post("http://localhost:5000/api/pay", {
+      const response = await axios.post(`${apiBase}/api/pay`, {
         ...formData,
         method: selectedMethod,
         orderId: orderData?.order?.id || "order_RZP_" + Date.now()
