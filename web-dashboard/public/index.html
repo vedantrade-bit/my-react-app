@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexusFlow | Modern Node.js Cloud Operations Dashboard</title>
+  <meta name="description" content="A state-of-the-art cloud telemetry and infrastructure operations dashboard powered by Node.js, Express, and high-performance glassmorphic UI.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="ambient-glow glow-1" aria-hidden="true"></div>
+  <div class="ambient-glow glow-2" aria-hidden="true"></div>
+  <div class="ambient-glow glow-3" aria-hidden="true"></div>
+
+  <div class="app-layout">
+    <!-- Top Navigation Bar -->
+    <header class="navbar" id="mainHeader">
+      <div class="nav-brand">
+        <div class="brand-logo-glow">
+          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">NexusFlow<span class="brand-highlight">.io</span></div>
+          <span class="brand-subtitle">Node.js Cloud Telemetry Engine</span>
+        </div>
+      </div>
+
+      <!-- Live Server Health Pill -->
+      <div class="server-status-pill" id="serverStatusBadge">
+        <span class="status-beacon pulsing"></span>
+        <span class="status-text" id="statusServerText">Node.js Daemon • Live</span>
+        <span class="uptime-badge" id="uptimeCounter">Uptime: 0m 0s</span>
+      </div>
+
+      <!-- Global Search & Command Bar -->
+      <div class="search-bar-wrapper">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="globalSearchInput" placeholder="Filter services, tasks, or metrics (Ctrl+K)..." autocomplete="off" spellcheck="false">
+        <kbd class="search-kbd">⌘K</kbd>
+      </div>
+
+      <!-- Action Buttons & User Profile -->
+      <div class="nav-actions">
+        <button class="btn btn-secondary btn-icon" id="btnRefresh" title="Refresh all telemetry data">
+          <svg class="icon-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span class="btn-text">Sync</span>
+        </button>
+
+        <button class="btn btn-primary" id="btnOpenTaskModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>New Task</span>
+        </button>
+
+        <button class="btn btn-ghost" id="btnOpenDiagnostics" title="Node.js Process & Engine Diagnostics">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+            <rect x="9" y="9" width="6" height="6"></rect>
+            <line x1="9" y1="1" x2="9" y2="4"></line>
+            <line x1="15" y1="1" x2="15" y2="4"></line>
+            <line x1="9" y1="20" x2="9" y2="23"></line>
+            <line x1="15" y1="20" x2="15" y2="23"></line>
+            <line x1="20" y1="9" x2="20" y2="14"></line>
+            <line x1="23" y1="9" x2="23" y2="14"></line>
+            <line x1="1" y1="9" x2="1" y2="14"></line>
+            <line x1="4" y1="9" x2="4" y2="14"></line>
+          </svg>
+          <span>Engine</span>
+        </button>
+
+        <!-- User Profile Pill -->
+        <div class="user-pill" title="Current session user">
+          <img src="assets/avatar.jpg" alt="Developer Avatar" class="user-avatar" id="headerAvatar">
+          <div class="user-meta">
+            <span class="user-name">Alex Vance</span>
+            <span class="user-role">Cloud Architect</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="dashboard-body" id="mainDashboard">
+      
+      <!-- Top Hero KPI Metric Cards -->
+      <section class="kpi-grid" aria-label="Key Performance Indicators">
+        
+        <!-- Metric 1: CPU Utilization -->
+        <article class="glass-card kpi-card" id="cardCpu">
+          <div class="kpi-header">
+            <div class="kpi-meta">
+              <span class="kpi-label">CPU Processing Load</span>
+              <span class="kpi-sub" id="cpuModelText">Multi-Core Node.js Loop</span>
+            </div>
+            <div class="kpi-icon-wrapper cyan">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+              </svg>
+            </div>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-value-row">
+              <span class="kpi-value" id="kpiCpuValue">--%</span>
+              <span class="kpi-badge badge-cyan" id="kpiCpuStatus">Normal</span>
+            </div>
+            <!-- Progress Meter -->
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill fill-cyan" id="kpiCpuProgress" style="width: 0%"></div>
+            </div>
+            <div class="kpi-footer-meta">
+              <span id="kpiCpuCores">Cores: 8 Detected</span>
+              <span class="trend-up" id="kpiCpuTrend">Node process load</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Metric 2: Memory Usage -->
+        <article class="glass-card kpi-card" id="cardMemory">
+          <div class="kpi-header">
+            <div class="kpi-meta">
+              <span class="kpi-label">System RAM & Heap</span>
+              <span class="kpi-sub" id="memSubText">V8 Engine Heap Allocation</span>
+            </div>
+            <div class="kpi-icon-wrapper violet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 19v-3"></path>
+                <path d="M10 19v-3"></path>
+                <path d="M14 19v-3"></path>
+                <path d="M18 19v-3"></path>
+                <path d="M6 8V5"></path>
+                <path d="M10 8V5"></path>
+                <path d="M14 8V5"></path>
+                <path d="M18 8V5"></path>
+                <rect x="2" y="8" width="20" height="8" rx="1"></rect>
+              </svg>
+            </div>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-value-row">
+              <span class="kpi-value" id="kpiMemValue">--%</span>
+              <span class="kpi-badge badge-violet" id="kpiMemUsedText">-- / --</span>
+            </div>
+            <!-- Progress Meter -->
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill fill-violet" id="kpiMemProgress" style="width: 0%"></div>
+            </div>
+            <div class="kpi-footer-meta">
+              <span id="kpiMemFree">Available RAM: calculating...</span>
+              <span class="trend-steady">Stable allocation</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Metric 3: Real-Time Throughput -->
+        <article class="glass-card kpi-card" id="cardThroughput">
+          <div class="kpi-header">
+            <div class="kpi-meta">
+              <span class="kpi-label">Active Request Ingress</span>
+              <span class="kpi-sub">HTTP/2 Express Gateway</span>
+            </div>
+            <div class="kpi-icon-wrapper emerald">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+            </div>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-value-row">
+              <span class="kpi-value" id="kpiRpsValue">--</span>
+              <span class="kpi-unit">req/s</span>
+              <span class="kpi-badge badge-emerald" id="kpiRpsTrend">+14.2%</span>
+            </div>
+            <!-- Progress Meter -->
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill fill-emerald" id="kpiRpsProgress" style="width: 48%"></div>
+            </div>
+            <div class="kpi-footer-meta">
+              <span id="kpiConnections">Active Sockets: 382</span>
+              <span class="peak-badge">Peak: 3.2k/s</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Metric 4: Latency & SLA -->
+        <article class="glass-card kpi-card" id="cardLatency">
+          <div class="kpi-header">
+            <div class="kpi-meta">
+              <span class="kpi-label">Average Edge Latency</span>
+              <span class="kpi-sub">Round-Trip Ping Duration</span>
+            </div>
+            <div class="kpi-icon-wrapper amber">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-value-row">
+              <span class="kpi-value" id="kpiLatencyValue">--</span>
+              <span class="kpi-unit">ms</span>
+              <span class="kpi-badge badge-amber" id="kpiSlaBadge">99.99% SLA</span>
+            </div>
+            <!-- Progress Meter -->
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill fill-amber" id="kpiLatencyProgress" style="width: 25%"></div>
+            </div>
+            <div class="kpi-footer-meta">
+              <span>Jitter: &plusmn;1.4ms</span>
+              <span class="trend-good">Ultra-Low Overhead</span>
+            </div>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- Real-time Interactive Telemetry Chart Section -->
+      <section class="glass-card chart-section" aria-label="Live Telemetry Graph">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2 class="section-title">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3v18h18"></path>
+                <path d="m19 9-5 5-4-4-3 3"></path>
+              </svg>
+              Live Telemetry & Ingress Stream
+            </h2>
+            <div class="live-stream-badge">
+              <span class="stream-dot"></span>
+              <span>SSE Real-Time Feed</span>
+            </div>
+          </div>
+
+          <div class="chart-controls">
+            <!-- Metric Toggle Buttons -->
+            <div class="btn-group" role="group" aria-label="Chart metric selector">
+              <button class="btn-toggle active" data-metric="throughput" id="btnMetricThroughput">Throughput (req/s)</button>
+              <button class="btn-toggle" data-metric="cpu" id="btnMetricCpu">CPU Load (%)</button>
+              <button class="btn-toggle" data-metric="latency" id="btnMetricLatency">Latency (ms)</button>
+            </div>
+            
+            <!-- Time Window Selector -->
+            <div class="time-window-selector">
+              <span class="time-btn active">Live</span>
+              <span class="time-btn">5m</span>
+              <span class="time-btn">15m</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div class="canvas-wrapper" id="canvasWrapper">
+          <canvas id="telemetryCanvas" aria-label="Interactive performance line chart"></canvas>
+          <div class="chart-tooltip" id="chartTooltip" style="opacity: 0;"></div>
+        </div>
+
+        <!-- Chart Quick Metrics Ribbon -->
+        <div class="chart-meta-ribbon">
+          <div class="ribbon-stat">
+            <span class="ribbon-label">Maximum Peak</span>
+            <span class="ribbon-val" id="chartMaxPeak">--</span>
+          </div>
+          <div class="ribbon-stat">
+            <span class="ribbon-label">Rolling Average</span>
+            <span class="ribbon-val" id="chartRollingAvg">--</span>
+          </div>
+          <div class="ribbon-stat">
+            <span class="ribbon-label">Lowest Value</span>
+            <span class="ribbon-val" id="chartLowestVal">--</span>
+          </div>
+          <div class="ribbon-stat">
+            <span class="ribbon-label">Sample Interval</span>
+            <span class="ribbon-val">4.0 sec / probe</span>
+          </div>
+          <div class="ribbon-stat">
+            <span class="ribbon-label">Active Engine</span>
+            <span class="ribbon-val cyan-text">HTML5 Canvas (60 FPS)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Two-Column Operations Layout -->
+      <div class="operations-grid">
+        
+        <!-- Left Column: Microservices Fleet & DevOps Tasks -->
+        <div class="column-primary">
+          
+          <!-- Microservices Fleet Section -->
+          <section class="glass-card fleet-section" aria-label="Microservices Fleet">
+            <div class="section-header">
+              <div class="section-title-group">
+                <h2 class="section-title">
+                  <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="20" height="8" rx="2"></rect>
+                    <rect x="2" y="14" width="20" height="8" rx="2"></rect>
+                    <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                    <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                  </svg>
+                  Microservices & Infrastructure Fleet
+                </h2>
+                <span class="counter-badge" id="servicesCounter">6/6 Healthy</span>
+              </div>
+              <div class="fleet-filter-bar">
+                <button class="filter-pill active" data-filter="all">All Services</button>
+                <button class="filter-pill" data-filter="operational">Operational</button>
+                <button class="filter-pill" data-filter="restarting">Rebooting</button>
+              </div>
+            </div>
+
+            <!-- Service Cards Grid -->
+            <div class="services-list" id="servicesContainer">
+              <!-- Dynamically populated by app.js -->
+              <div class="loading-placeholder">Initializing Node.js telemetry pipeline...</div>
+            </div>
+          </section>
+
+          <!-- Maintenance & DevOps Tasks Queue -->
+          <section class="glass-card tasks-section" aria-label="Deployment & Tasks Queue">
+            <div class="section-header">
+              <div class="section-title-group">
+                <h2 class="section-title">
+                  <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    <path d="m9 14 2 2 4-4"></path>
+                  </svg>
+                  DevOps & Maintenance Queue
+                </h2>
+                <span class="counter-badge" id="tasksCounter">4 Tasks</span>
+              </div>
+              <div class="tasks-quick-actions">
+                <button class="btn btn-sm btn-secondary" id="btnFilterPendingTasks">Pending</button>
+                <button class="btn btn-sm btn-secondary" id="btnFilterAllTasks">All</button>
+              </div>
+            </div>
+
+            <!-- Task Items List -->
+            <div class="tasks-list" id="tasksContainer">
+              <!-- Dynamically populated by app.js -->
+            </div>
+          </section>
+
+        </div>
+
+        <!-- Right Column: System Diagnostics & Live Event Log -->
+        <div class="column-secondary">
+          
+          <!-- Node.js System Architecture Overview -->
+          <section class="glass-card system-info-section" aria-label="Node.js Process Information">
+            <div class="section-header">
+              <div class="section-title-group">
+                <h2 class="section-title">
+                  <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="4 17 10 11 4 5"></polyline>
+                    <line x1="12" y1="19" x2="20" y2="19"></line>
+                  </svg>
+                  Node.js Runtime Specs
+                </h2>
+              </div>
+              <span class="version-tag" id="specNodeVersion">Node.js v24</span>
+            </div>
+
+            <div class="specs-grid">
+              <div class="spec-row">
+                <span class="spec-label">Platform OS</span>
+                <span class="spec-val" id="specPlatform">Windows NT (x64)</span>
+              </div>
+              <div class="spec-row">
+                <span class="spec-label">V8 Engine</span>
+                <span class="spec-val" id="specV8Version">v12.x Core</span>
+              </div>
+              <div class="spec-row">
+                <span class="spec-label">CPU Hardware</span>
+                <span class="spec-val text-truncate" id="specCpuModel">Detecting...</span>
+              </div>
+              <div class="spec-row">
+                <span class="spec-label">Active Hostname</span>
+                <span class="spec-val" id="specHostname">localhost</span>
+              </div>
+              <div class="spec-row">
+                <span class="spec-label">Process Heap RSS</span>
+                <span class="spec-val" id="specHeapRss">-- MB</span>
+              </div>
+              <div class="spec-row">
+                <span class="spec-label">V8 Heap Used</span>
+                <span class="spec-val highlight-cyan" id="specHeapUsed">-- MB</span>
+              </div>
+            </div>
+
+            <!-- Interactive Diagnostics Action -->
+            <div class="specs-footer">
+              <button class="btn btn-full btn-ghost-cyan" id="btnLaunchFullSpecs">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                View Deep System Audit
+              </button>
+            </div>
+          </section>
+
+          <!-- Live Event Terminal Stream -->
+          <section class="glass-card terminal-section" aria-label="System Event Log Terminal">
+            <div class="terminal-header">
+              <div class="terminal-dots">
+                <span class="term-dot dot-red"></span>
+                <span class="term-dot dot-yellow"></span>
+                <span class="term-dot dot-green"></span>
+              </div>
+              <span class="terminal-title">live-telemetry.log</span>
+              <button class="terminal-clear-btn" id="btnClearLogs" title="Clear console buffer">Clear</button>
+            </div>
+
+            <div class="terminal-body" id="terminalLogsContainer">
+              <!-- Logs populated dynamically -->
+            </div>
+
+            <div class="terminal-footer">
+              <span class="terminal-status-indicator"></span>
+              <span class="terminal-status-text">Log streaming daemon active</span>
+            </div>
+          </section>
+
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-content">
+        <p class="footer-text">
+          Designed with <strong>Node.js</strong> &amp; <strong>Express</strong> &bull; NexusFlow Cloud Operations Suite &bull; High Precision Web Architecture
+        </p>
+        <div class="footer-badges">
+          <span class="tech-pill">Node.js 24</span>
+          <span class="tech-pill">Express 4.x</span>
+          <span class="tech-pill">SSE Stream</span>
+          <span class="tech-pill">HTML5 Canvas</span>
+          <span class="tech-pill">Vanilla CSS</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Native HTML5 Dialog: Create New Task Modal -->
+  <dialog id="taskModal" class="native-modal">
+    <div class="modal-wrapper">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-title">Create DevOps Task</h3>
+            <p class="modal-subtitle">Dispatch maintenance or infrastructure deployment request</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="btnCloseTaskModal" aria-label="Close dialog">&times;</button>
+      </div>
+
+      <form id="createTaskForm" class="modal-form">
+        <div class="form-group">
+          <label for="taskTitleInput" class="form-label">Task Description</label>
+          <input type="text" id="taskTitleInput" class="form-input" placeholder="e.g., Migrate Redis nodes to high-memory cluster" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="taskPrioritySelect" class="form-label">Priority</label>
+            <select id="taskPrioritySelect" class="form-select">
+              <option value="Low">Low Priority</option>
+              <option value="Medium" selected>Medium Priority</option>
+              <option value="High">High Priority</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="taskAssigneeInput" class="form-label">Assignee</label>
+            <input type="text" id="taskAssigneeInput" class="form-input" placeholder="e.g., SRE Lead" value="DevOps Automation">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="taskDueDateInput" class="form-label">Target Completion</label>
+          <input type="text" id="taskDueDateInput" class="form-input" placeholder="e.g., Today, 05:00 PM" value="Today, 06:00 PM">
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="btnCancelTaskModal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Dispatch Task</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Native HTML5 Dialog: Deep Node.js Engine & Hardware Diagnostics Modal -->
+  <dialog id="diagnosticsModal" class="native-modal">
+    <div class="modal-wrapper modal-lg">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge cyan">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+              <line x1="7" y1="2" x2="7" y2="22"></line>
+              <line x1="17" y1="2" x2="17" y2="22"></line>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <line x1="2" y1="7" x2="7" y2="7"></line>
+              <line x1="2" y1="17" x2="7" y2="17"></line>
+              <line x1="17" y1="17" x2="22" y2="17"></line>
+              <line x1="17" y1="7" x2="22" y2="7"></line>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-title">Node.js Engine & Host Diagnostics</h3>
+            <p class="modal-subtitle">Direct telemetry from Node.js 'os' and 'process' modules</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="btnCloseDiagModal" aria-label="Close dialog">&times;</button>
+      </div>
+
+      <div class="diagnostics-modal-body">
+        <div class="diag-cards-row">
+          <div class="diag-metric-box">
+            <span class="box-label">Node Runtime</span>
+            <span class="box-value" id="diagNodeVer">--</span>
+          </div>
+          <div class="diag-metric-box">
+            <span class="box-label">V8 Engine</span>
+            <span class="box-value" id="diagV8Ver">--</span>
+          </div>
+          <div class="diag-metric-box">
+            <span class="box-label">OS Platform</span>
+            <span class="box-value" id="diagOsPlatform">--</span>
+          </div>
+          <div class="diag-metric-box">
+            <span class="box-label">CPU Cores</span>
+            <span class="box-value" id="diagCpuCores">--</span>
+          </div>
+        </div>
+
+        <div class="diag-detail-table">
+          <h4 class="table-headline">Process Memory Breakdown (V8 Garbage Collector)</h4>
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>Segment</th>
+                <th>Allocated Amount</th>
+                <th>Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>process.memoryUsage().rss</code></td>
+                <td id="diagRss">--</td>
+                <td>Resident Set Size (Total physical memory allocated for process)</td>
+              </tr>
+              <tr>
+                <td><code>process.memoryUsage().heapTotal</code></td>
+                <td id="diagHeapTotal">--</td>
+                <td>Total allocated V8 JavaScript heap memory pool</td>
+              </tr>
+              <tr>
+                <td><code>process.memoryUsage().heapUsed</code></td>
+                <td id="diagHeapUsed" class="highlight-cyan">--</td>
+                <td>Actual active memory occupied by JavaScript variables & objects</td>
+              </tr>
+              <tr>
+                <td><code>process.memoryUsage().external</code></td>
+                <td id="diagExternal">--</td>
+                <td>Memory consumed by C++ bound objects (Buffers, I/O streams)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="diag-detail-table">
+          <h4 class="table-headline">Host System Memory</h4>
+          <table class="modern-table">
+            <tbody>
+              <tr>
+                <td>Total Physical Host RAM</td>
+                <td id="diagHostTotalMem">--</td>
+              </tr>
+              <tr>
+                <td>Available Free Host RAM</td>
+                <td id="diagHostFreeMem">--</td>
+              </tr>
+              <tr>
+                <td>Host System Uptime</td>
+                <td id="diagHostUptime">--</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="btnExportSpecs">Copy Diagnostics JSON</button>
+        <button type="button" class="btn btn-primary" id="btnDismissDiag">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Toast Notification Floating Container -->
+  <aside id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></aside>
+
+  <!-- Scripts -->
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
