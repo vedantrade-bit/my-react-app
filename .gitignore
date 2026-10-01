@@ -21,3 +21,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Nested cloned folder (already duplicated at repository root)
+my-react-app/
